@@ -11,7 +11,7 @@ const routes = [
     path: '/pokemons',
     name: 'pokemons',
     component: () => import('../views/PokemonList.vue')
-  }
+  },
 ]
 
 const router = createRouter({

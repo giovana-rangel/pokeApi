@@ -1,15 +1,14 @@
 <template>
   <div class="p-5">
     <toast-msg/>
-
     <tab-view>
       <tab-panel header="Todos">
         <h2>Pokemones</h2>
         <div class="grid mb-3">
           <div v-for="p in pokemons" :key="p" class="col-12 md:col-6 lg:col-3 flex justify-content-around gap-2 border-solid surface-border">
             <span class="text-lg col-6">{{p.name}}</span>
-            <btn-app label="Detalles" icon="pi pi-external-link" class="p-button-outlined" @click="openBasic(p.url)"/>
-            <btn-app @click="fav(p.url)" icon="pi pi-bookmark-fill" class="p-button-rounded p-button-text"/>
+            <btn-app @click="openBasic(p.url)" label="Detalles" icon="pi pi-external-link" class="p-button-outlined"/>
+            <btn-app @click="addFav(p.url)" icon="pi pi-bookmark-fill" class="p-button-rounded p-button-text"/>
           </div>
         </div>
       </tab-panel>
@@ -47,6 +46,8 @@
 import axios from 'axios';
 import { onMounted } from 'vue';
 import usePokemons from '../../services/pokemons.js';
+import { mapState,mapMutations } from 'vuex'
+
 export default {
   setup(){
     const {pokemons, getPokemons} = usePokemons();
@@ -57,10 +58,11 @@ export default {
   },
   data(){
     return {
-      displayBasic: false,
-      details: [],
-      favs: []
+      displayBasic: false
     }
+  },
+  computed: {
+    ...mapState(["baseUrl","details","favs"])
   },
   methods:{
     openBasic(url) {
@@ -70,34 +72,37 @@ export default {
     closeBasic() {
       this.displayBasic = false;
     },
-    addPokemon(url){
-      axios.get(url)
+    async addPokemon(url){
+      await axios.get(url)
       .then((res)=>{
-        this.details = [{
+        let newDetails = [{
           id: res.data.id,
           name: res.data.name,
           height: res.data.height,
           weight: res.data.weight,
           url: url,
         }]
+        this.setDetails(newDetails)
       }).catch(err=>{console.error(err);})
     },
-    fav(url){
-      axios.get(url)
+    async addFav(url){
+      await axios.get(url)
       .then((res)=>{
-        this.favs.push({
+        let fav = {
           id: res.data.id,
           name: res.data.name,
           url:url
-        });
+        }
+        this.setFavs(fav);
         this.$toast.add({severity:'success', summary: res.data.name, detail:'Agregado a favoritos'})
-      }).catch(err => console.error(err))
-      
+      })
+      .catch(err => console.error(err))
     },
     remove(p){
-      this.favs = this.favs.filter((item) => item.name !== p.name);
+      this.removeFav(p);
       this.$toast.add({severity:'error', summary: p.name, detail:'Eliminado de favoritos'})
-    }
+    },
+    ...mapMutations(["setDetails","setFavs","removeFav"])
   }
 }
 </script>
